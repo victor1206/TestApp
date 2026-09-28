@@ -1,0 +1,100 @@
+﻿@page "/proyecto/create"
+@using TestApp.DTO.ProyectoDTO
+@using TestApp.DTO.CategoriaDTO
+@using TestApp.Service
+@inject ProyectoService proyectoService;
+@inject CategoriaService categoriaService;
+@inject NavigationManager NavManager;
+@rendermode InteractiveServer
+<h3>Create Proyecto</h3>
+
+<EditForm Model="@proyectoGuardar" FormName="createProy" OnValidSubmit="Guardar">
+    <DataAnnotationsValidator />
+    <div class="mb-3">
+        <label class="form-label" for="txtnombre">Titulo Proyecto</label>
+        <InputText class="form-control" id="txtnombre" @bind-Value="proyectoGuardar.titulo" maxlength="150" />
+        <ValidationMessage For="@(() => proyectoGuardar.titulo)" />
+    </div>
+    <div class="mb-3">
+        <label class="form-label" for="txtdescripcion">Descripcion Proyecto</label>
+        <InputText class="form-control" id="txtdescripcion" @bind-Value="proyectoGuardar.descripcion" maxlength="250" />
+        <ValidationMessage For="@(() => proyectoGuardar.descripcion)" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label" for="txtfechainicio">Fecha Inicio</label>
+        <InputDate TValue="DateTime" class="form-control" id="txtfechainicio" @bind-Value="proyectoGuardar.fechaInicio" />
+        <ValidationMessage For="@(() => proyectoGuardar.fechaInicio)" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label" for="txtfechafin">Fecha Fin</label>
+        <InputDate TValue="DateTime" class="form-control" id="txtfechafin" @bind-Value="proyectoGuardar.fechaFin" />
+        <ValidationMessage For="@(() => proyectoGuardar.fechaFin)" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label" for="slctg">Categoria</label>
+        <InputSelect id="slctg" @bind-Value="proyectoGuardar.categoriaId" class="form-select">
+            @foreach (var cat in categorias)
+            {
+                <option value="@cat.Id">@cat.Nombre</option>
+            }
+        </InputSelect>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Guardar</button>
+    <button type="button" class="btn btn-dark" @onclick="Index">Regresar</button>
+
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger mt-3">@errorMessage</div>
+    }
+
+</EditForm>
+
+@code {
+    private ProyectoGuardarDTO proyectoGuardar = new();
+    private List<CategoriaSalidaDTO> categorias = new();
+
+    private string errorMessage;
+
+    private bool isFirstRender = true;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        // Solo queremos hacer esto en la primera renderización
+        if (firstRender)
+        {
+            try
+            {
+                categorias = await categoriaService.GetCategoria(); // Llamamos al método para cargar productos
+                StateHasChanged(); // Llamamos a StateHasChanged para refrescar la UI
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error al cargar las categorias: {ex.Message}");
+            }
+        }
+    }
+
+    private async Task Guardar()
+    {
+        var resultado = await proyectoService.PostProyecto(proyectoGuardar);
+        if (resultado)
+        {
+            Index();
+            return;
+        }
+        else
+        {
+            errorMessage = "Error al guardar el proyecto";
+        }
+
+    }
+
+    void Index()
+    {
+        NavManager.NavigateTo("/proyecto/index", true);
+    }
+}

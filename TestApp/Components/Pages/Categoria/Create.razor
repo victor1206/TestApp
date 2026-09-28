@@ -1,0 +1,50 @@
+﻿@page "/categoria/create"
+@using TestApp.DTO.CategoriaDTO
+@using TestApp.Service
+@inject CategoriaService categoriaService;
+@inject NavigationManager NavManager;
+@rendermode InteractiveServer
+<h3>Create Categoria</h3>
+
+<EditForm Model="@categoriaGuardar" FormName="createCtg" OnValidSubmit="Guardar">
+    <DataAnnotationsValidator />
+    <div class="mb-3">
+        <label class="form-label" for="txtnombre">Nombre Usuario</label>
+        <InputText class="form-control" id="txtnombre" @bind-Value="categoriaGuardar.nombre" />
+        <ValidationMessage For="@(() => categoriaGuardar.nombre)" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Guardar</button>
+    <button type="button" class="btn btn-dark" @onclick="Index">Regresar</button>
+
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger mt-3">@errorMessage</div>
+    }
+
+</EditForm>
+
+@code {
+    private CategoriaGuardarDTO categoriaGuardar = new();
+    private string errorMessage;
+
+    private async Task Guardar()
+    {
+        var resultado = await categoriaService.PostCategoria(categoriaGuardar);
+        if (resultado)
+        {
+            Index();
+            return;
+        }
+        else
+        {
+            errorMessage = "Error al guardar la categoria";
+        }
+
+    }
+
+    void Index()
+    {
+        NavManager.NavigateTo("/categoria/index", true);
+    }
+}

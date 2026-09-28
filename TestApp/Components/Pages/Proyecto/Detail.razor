@@ -1,0 +1,111 @@
+﻿@page "/proyecto/detail/{pId:int}"
+@using TestApp.DTO.ProyectoDTO
+@using TestApp.DTO.CategoriaDTO
+@using TestApp.Service
+
+@inject ProyectoService proyectoService;
+@inject CategoriaService categoriaService;
+@inject NavigationManager NavManager;
+@rendermode InteractiveServer
+<h3>Detalle Proyecto</h3>
+
+<EditForm Model="proyectoModificar" FormName="detailProy" OnValidSubmit="IraModificar">
+
+    <div class="mb-3">
+        <label class="form-label">Titulo Proyecto</label>
+        <InputNumber style="display:none;" @bind-Value="proyectoModificar.id" />
+        <InputText class="form-control" readonly="readonly" @bind-Value="proyectoModificar.titulo" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label" for="txtdescripcion">Descripcion Proyecto</label>
+        <InputText class="form-control" id="txtdescripcion" readonly="readonly" @bind-Value="proyectoModificar.descripcion" maxlength="250" />
+        <ValidationMessage For="@(() => proyectoModificar.descripcion)" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label" for="txtfechainicio">Fecha Inicio</label>
+        <InputDate TValue="DateTime" class="form-control" readonly="readonly"  id="txtfechainicio" @bind-Value="proyectoModificar.fechaInicio" />
+        <ValidationMessage For="@(() => proyectoModificar.fechaInicio)" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label" for="txtfechafin">Fecha Fin</label>
+        <InputDate TValue="DateTime" class="form-control" id="txtfechafin" readonly="readonly" @bind-Value="proyectoModificar.fechaFin" />
+        <ValidationMessage For="@(() => proyectoModificar.fechaFin)" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label" for="slctg">Categoria</label>
+        <InputSelect id="slctg" @bind-Value="proyectoModificar.categoriaId" disabled class="form-select">
+            @foreach (var cat in categorias)
+            {
+                @if (cat.Id == proyectoModificar.categoriaId)
+                {
+                    <option value="@cat.Id" selected>@cat.Nombre</option>
+                }
+                else
+                {
+                    <option value="@cat.Id">@cat.Nombre</option>
+                }
+            }
+        </InputSelect>
+    </div>
+
+    <button type="submit" class="btn btn-info">Ir a Modificar</button>
+    <button class="btn btn-dark" @onclick="Index">Regresar</button>
+
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger mt-3">@errorMessage</div>
+    }
+
+</EditForm>
+
+
+
+@code {
+    private ProyectoModificarDTO proyectoModificar = new ProyectoModificarDTO();
+    private List<CategoriaSalidaDTO> categorias = new();
+    private ProyectoSalidaDTO proyecto = new ProyectoSalidaDTO();
+    private string errorMessage;
+
+    [Parameter]
+    public int pId { get; set; }
+
+    private bool isFirstRender = true;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        // Solo queremos hacer esto en la primera renderización
+        if (firstRender)
+        {
+            try
+            {
+                categorias = await categoriaService.GetCategoria();
+                proyecto = await proyectoService.GetProyectoId(pId); // Llamamos al método para cargar el proyecto
+                proyectoModificar.id = proyecto.id;
+                proyectoModificar.titulo = proyecto.titulo;
+                proyectoModificar.descripcion = proyecto.descripcion;
+                proyectoModificar.fechaInicio = proyecto.fechaInicio;
+                proyectoModificar.fechaFin = proyecto.fechaFin;
+                proyectoModificar.categoriaId = proyecto.categoria.Id;
+                StateHasChanged(); // Llamamos a StateHasChanged para refrescar la UI
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error al cargar la Categoria: {ex.Message}");
+            }
+        }
+    }
+
+    private void IraModificar()
+    {
+        NavManager.NavigateTo("/proyecto/edit/" + proyectoModificar.id, true);
+    }
+
+    void Index()
+    {
+        NavManager.NavigateTo("/proyecto/index", true);
+    }
+}

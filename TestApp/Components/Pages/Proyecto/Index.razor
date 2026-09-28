@@ -1,0 +1,111 @@
+﻿@page "/proyecto/index"
+@using TestApp.DTO
+@using TestApp.DTO.ProyectoDTO
+@using TestApp.Service;
+@rendermode InteractiveServer
+@* @using BlazorApp1.Services *@
+
+<h3>Lista de Proyectos</h3>
+
+<button type="button" id="idNuevo" class="btn btn-primary" @onclick="newProyecto">Nuevo Proyecto</button>
+@if (proyectos == null)
+{
+    <p><em>Cargando...</em></p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Titulo</th>
+                <th>Descripccion</th>
+                <th>Fecha Inicio</th>
+                <th>Fecha Fin</th>
+                <th>Categoria</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var proye in proyectos)
+            {
+                <tr>
+                    <td>@proye.titulo</td>
+                    <td>@proye.descripcion</td>
+                    <td>@proye.fechaInicio</td>
+                    <td>@proye.fechaFin</td>
+                    <td>@proye.categoria.Nombre</td>
+                    <td><button class="btn btn-success" @onclick="(() => goModify(proye.id))">Modificar</button></td>
+                    <td><button class="btn btn-info" @onclick="(() => goDetail(proye.id))">Detalle</button></td>
+                    <td><button class="btn btn-danger" @onclick="(() => goDelete(proye.id))">Eliminar</button></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger">@errorMessage</div>
+}
+@inject ProyectoService proyectoService;
+@inject NavigationManager NavManager;
+@code {
+    private List<ProyectoSalidaDTO> proyectos = new();
+    private string errorMessage;
+
+    private bool isFirstRender = true;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        // Solo queremos hacer esto en la primera renderización
+        if (firstRender)
+        {
+            try
+            {
+                proyectos = await proyectoService.GetProyecto(); // Llamamos al método para cargar productos
+                StateHasChanged(); // Llamamos a StateHasChanged para refrescar la UI
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error al cargar proyectos: {ex.Message}");
+            }
+        }
+    }
+
+    /*protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            categorias = await categoriaService.GetCategoria();
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            throw new Exception(ex.Message);
+        }
+    }*/
+
+    void newProyecto()
+    {
+        NavManager.NavigateTo("/proyecto/create", true);
+    }
+
+    void goModify(int pId)
+    {
+        NavManager.NavigateTo("/proyecto/edit/" + pId);
+
+    }
+
+    void goDetail(int pId)
+    {
+        NavManager.NavigateTo("/proyecto/detail/" + pId);
+    }
+
+    void goDelete(int pId)
+    {
+        NavManager.NavigateTo("/proyecto/delete/" + pId);
+    }
+}
+
+   

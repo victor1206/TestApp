@@ -1,0 +1,68 @@
+﻿@page "/"
+@using TestApp.DTO.UsuarioDTO
+@using TestApp.Service
+@rendermode InteractiveServer
+
+<PageTitle>Login</PageTitle>
+
+<EditForm Model="userSession" FormName="LoginForm" OnValidSubmit="HandleLogin">
+    <div class="mb-3">
+        <label class="form-label" >Nombre Usuario</label>
+        <InputText class="form-control" @bind-Value="userSession.Login" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Contraseña</label>
+        <InputText type="password" class="form-control" @bind-Value="userSession.Clave" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Login</button>
+
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger mt-3">@errorMessage</div>    
+    }
+
+</EditForm>
+
+@inject NavigationManager navigationManager
+@inject AuthService authService
+
+@code{
+    private UsuarioLoginDTO userSession = new UsuarioLoginDTO();
+    private string errorMessage;
+
+    private bool isAuthenticated;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            isAuthenticated = await authService.IsAuthenticated();
+
+            if (isAuthenticated)
+            {
+                navigationManager.NavigateTo("/home", true);
+            }
+            else
+            {
+                navigationManager.NavigateTo("/"); 
+            }
+
+            StateHasChanged();
+        }
+    }
+
+    private async Task HandleLogin()
+    {
+        var token = await authService.Login(userSession);
+        if (string.IsNullOrEmpty(token))
+        {
+            errorMessage = "Credenciales incorrectas";
+            return;
+        }
+
+        await authService.SetToken(token);
+        navigationManager.NavigateTo("/home", true);
+    }
+}
